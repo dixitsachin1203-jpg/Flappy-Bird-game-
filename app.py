@@ -4,7 +4,6 @@ st.set_page_config(page_title="Flappy Bird Spacebar", layout="centered")
 
 st.title("🐦 Flappy Bird (Press SPACE to Jump)")
 
-# Embed HTML + JS game inside Streamlit
 game_html = """
 <!DOCTYPE html>
 <html>
@@ -31,13 +30,17 @@ canvas {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let bird = { x: 50, y: 200, velocity: 0 };
+let bird = { x: 50, y: 250, velocity: 0 };
 let gravity = 0.5;
 let pipes = [];
 let score = 0;
 let gameOver = false;
 
-// Generate pipes
+let gameStarted = false;
+let countdown = 3;
+let autoFlaps = 2;
+
+// Create pipes
 function createPipe() {
     let height = Math.floor(Math.random() * 200) + 100;
     pipes.push({ x: 400, height: height });
@@ -45,19 +48,41 @@ function createPipe() {
 
 // Spacebar control
 document.addEventListener("keydown", function(e) {
-    if (e.code === "Space") {
+    if (e.code === "Space" && gameStarted) {
         bird.velocity = -8;
     }
 });
 
-// Game loop
+// Countdown logic
+function startCountdown() {
+    let interval = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+            clearInterval(interval);
+            gameStarted = true;
+        }
+    }, 1000);
+}
+
+startCountdown();
+
+// Game update
 function update() {
     if (gameOver) return;
+
+    // During countdown → no physics/collision
+    if (!gameStarted) return;
+
+    // Auto flaps (first 2 boosts)
+    if (autoFlaps > 0) {
+        bird.velocity = -6;
+        autoFlaps--;
+    }
 
     bird.velocity += gravity;
     bird.y += bird.velocity;
 
-    // Create pipes
+    // Generate pipes
     if (pipes.length === 0 || pipes[pipes.length - 1].x < 200) {
         createPipe();
     }
@@ -65,7 +90,7 @@ function update() {
     // Move pipes
     pipes.forEach(pipe => pipe.x -= 3);
 
-    // Collision
+    // Collision detection
     pipes.forEach(pipe => {
         if (pipe.x < 70 && pipe.x > 20) {
             if (bird.y < pipe.height || bird.y > pipe.height + 150) {
@@ -110,6 +135,14 @@ function draw() {
     ctx.font = "20px Arial";
     ctx.fillText("Score: " + score, 10, 25);
 
+    // Countdown display
+    if (!gameStarted) {
+        ctx.fillStyle = "black";
+        ctx.font = "50px Arial";
+        ctx.fillText(countdown > 0 ? countdown : "GO!", 170, 250);
+    }
+
+    // Game Over
     if (gameOver) {
         ctx.fillStyle = "red";
         ctx.font = "30px Arial";
