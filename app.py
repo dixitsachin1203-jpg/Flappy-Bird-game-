@@ -1,8 +1,8 @@
 import streamlit as st
 
-st.set_page_config(page_title="Flappy Bird", layout="centered")
+st.set_page_config(page_title="Flappy Bird Easy Mode", layout="centered")
 
-st.title("🐦 Flappy Bird (Press SPACE or Click to Jump)")
+st.title("🐦 Flappy Bird (Easy Mode)")
 
 game_html = """
 <!DOCTYPE html>
@@ -31,9 +31,14 @@ canvas {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Force focus so keyboard works
 canvas.focus();
 canvas.addEventListener("click", () => canvas.focus());
+
+// EASY MODE SETTINGS
+let gravity = 0.3;       // ↓ slower fall
+let jumpPower = -7;      // ↑ stronger jump
+let pipeSpeed = 2;       // ↓ slower pipes
+let pipeGap = 180;       // ↑ bigger gap
 
 let bird, pipes, score, gameOver, gameStarted, countdown, autoFlaps;
 
@@ -51,23 +56,20 @@ function resetGame() {
 
 resetGame();
 
-// Create pipes
 function createPipe() {
-    let height = Math.floor(Math.random() * 200) + 100;
+    let height = Math.floor(Math.random() * 180) + 120;
     pipes.push({ x: 400, height: height });
 }
 
-// Controls (SPACE + Click)
+// Controls
 function flap() {
     if (gameStarted && !gameOver) {
-        bird.velocity = -8;
+        bird.velocity = jumpPower;
     }
 }
 
-document.addEventListener("keydown", function(e) {
-    if (e.code === "Space") {
-        flap();
-    }
+document.addEventListener("keydown", e => {
+    if (e.code === "Space") flap();
 });
 
 canvas.addEventListener("mousedown", flap);
@@ -88,25 +90,25 @@ function update() {
     if (gameOver) return;
     if (!gameStarted) return;
 
-    // Auto flaps
+    // Auto start boost
     if (autoFlaps > 0) {
-        bird.velocity = -6;
+        bird.velocity = -5;
         autoFlaps--;
     }
 
-    bird.velocity += 0.5;
+    bird.velocity += gravity;
     bird.y += bird.velocity;
 
-    if (pipes.length === 0 || pipes[pipes.length - 1].x < 200) {
+    if (pipes.length === 0 || pipes[pipes.length - 1].x < 220) {
         createPipe();
     }
 
-    pipes.forEach(pipe => pipe.x -= 3);
+    pipes.forEach(pipe => pipe.x -= pipeSpeed);
 
-    // Collision
+    // Easier collision (tolerance added)
     pipes.forEach(pipe => {
-        if (pipe.x < 70 && pipe.x > 20) {
-            if (bird.y < pipe.height || bird.y > pipe.height + 150) {
+        if (pipe.x < 75 && pipe.x > 15) {
+            if (bird.y < pipe.height - 5 || bird.y > pipe.height + pipeGap + 5) {
                 gameOver = true;
             }
         }
@@ -121,6 +123,11 @@ function update() {
         if (!pipe.passed && pipe.x < 50) {
             pipe.passed = true;
             score++;
+
+            // VERY slow difficulty increase
+            if (score % 5 === 0) {
+                pipeSpeed += 0.2;
+            }
         }
     });
 }
@@ -131,7 +138,7 @@ function draw() {
 
     // Bird
     ctx.beginPath();
-    ctx.arc(bird.x, bird.y, 10, 0, Math.PI * 2);
+    ctx.arc(bird.x, bird.y, 12, 0, Math.PI * 2);
     ctx.fillStyle = "yellow";
     ctx.fill();
 
@@ -139,7 +146,7 @@ function draw() {
     pipes.forEach(pipe => {
         ctx.fillStyle = "green";
         ctx.fillRect(pipe.x, 0, 40, pipe.height);
-        ctx.fillRect(pipe.x, pipe.height + 150, 40, 500);
+        ctx.fillRect(pipe.x, pipe.height + pipeGap, 40, 500);
     });
 
     // Score
@@ -153,13 +160,12 @@ function draw() {
         ctx.fillText(countdown > 0 ? countdown : "GO!", 170, 250);
     }
 
-    // Game Over + Restart Button
+    // Game Over
     if (gameOver) {
         ctx.fillStyle = "red";
         ctx.font = "30px Arial";
         ctx.fillText("Game Over", 120, 220);
 
-        // Restart Button
         ctx.fillStyle = "black";
         ctx.fillRect(140, 250, 120, 40);
         ctx.fillStyle = "white";
@@ -168,7 +174,7 @@ function draw() {
     }
 }
 
-// Restart click detection
+// Restart click
 canvas.addEventListener("click", function(e) {
     if (gameOver) {
         let rect = canvas.getBoundingClientRect();
