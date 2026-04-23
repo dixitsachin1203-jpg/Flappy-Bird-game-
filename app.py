@@ -1,9 +1,3 @@
-import streamlit as st
-
-st.set_page_config(page_title="Flappy Bird Easy Mode", layout="centered")
-
-st.title("🐦 Flappy Bird (Easy Mode)")
-
 game_html = """
 <!DOCTYPE html>
 <html>
@@ -34,15 +28,17 @@ const ctx = canvas.getContext("2d");
 canvas.focus();
 canvas.addEventListener("click", () => canvas.focus());
 
-// EASY MODE SETTINGS
-let gravity = 0.3;       // ↓ slower fall
-let jumpPower = -7;      // ↑ stronger jump
-let pipeSpeed = 2;       // ↓ slower pipes
-let pipeGap = 180;       // ↑ bigger gap
+// EASY SETTINGS
+let gravity = 0.3;
+let jumpPower = -7;
+let pipeSpeed = 2;
+let pipeGap = 180;
+
+// Load best score
+let bestScore = localStorage.getItem("flappyBest") || 0;
 
 let bird, pipes, score, gameOver, gameStarted, countdown, autoFlaps;
 
-// Reset game
 function resetGame() {
     bird = { x: 50, y: 250, velocity: 0 };
     pipes = [];
@@ -61,7 +57,6 @@ function createPipe() {
     pipes.push({ x: 400, height: height });
 }
 
-// Controls
 function flap() {
     if (gameStarted && !gameOver) {
         bird.velocity = jumpPower;
@@ -74,7 +69,6 @@ document.addEventListener("keydown", e => {
 
 canvas.addEventListener("mousedown", flap);
 
-// Countdown
 function startCountdown() {
     let interval = setInterval(() => {
         countdown--;
@@ -85,12 +79,10 @@ function startCountdown() {
     }, 1000);
 }
 
-// Update
 function update() {
     if (gameOver) return;
     if (!gameStarted) return;
 
-    // Auto start boost
     if (autoFlaps > 0) {
         bird.velocity = -5;
         autoFlaps--;
@@ -105,7 +97,6 @@ function update() {
 
     pipes.forEach(pipe => pipe.x -= pipeSpeed);
 
-    // Easier collision (tolerance added)
     pipes.forEach(pipe => {
         if (pipe.x < 75 && pipe.x > 15) {
             if (bird.y < pipe.height - 5 || bird.y > pipe.height + pipeGap + 5) {
@@ -118,13 +109,17 @@ function update() {
         gameOver = true;
     }
 
-    // Score
+    // Score + Best Score Update
     pipes.forEach(pipe => {
         if (!pipe.passed && pipe.x < 50) {
             pipe.passed = true;
             score++;
 
-            // VERY slow difficulty increase
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("flappyBest", bestScore);
+            }
+
             if (score % 5 === 0) {
                 pipeSpeed += 0.2;
             }
@@ -132,7 +127,6 @@ function update() {
     });
 }
 
-// Draw
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -149,10 +143,11 @@ function draw() {
         ctx.fillRect(pipe.x, pipe.height + pipeGap, 40, 500);
     });
 
-    // Score
+    // Score Display
     ctx.fillStyle = "black";
     ctx.font = "20px Arial";
     ctx.fillText("Score: " + score, 10, 25);
+    ctx.fillText("Best: " + bestScore, 280, 25);
 
     // Countdown
     if (!gameStarted) {
@@ -174,7 +169,7 @@ function draw() {
     }
 }
 
-// Restart click
+// Restart
 canvas.addEventListener("click", function(e) {
     if (gameOver) {
         let rect = canvas.getBoundingClientRect();
@@ -187,7 +182,6 @@ canvas.addEventListener("click", function(e) {
     }
 });
 
-// Loop
 function loop() {
     update();
     draw();
@@ -200,5 +194,3 @@ loop();
 </body>
 </html>
 """
-
-st.components.v1.html(game_html, height=520)
