@@ -82,7 +82,7 @@ if st.session_state.submitted:
 
     st.markdown("""
     <div class="success-box">
-        <div class="big-text">🎉 Congratulations 🎉</div>
+        <div class="big-text">🎉 Congratulations Chahal Shukla🎉</div>
         <p style="font-size:22px;">You scored <b>100%</b></p>
         <div class="rank">🏆 All India Rank #1 🏆</div>
         <p style="margin-top:20px;">Outstanding Performance!</p>
@@ -145,5 +145,7 @@ else:
 # ------------------- DISCLAIMER -------------------
 st.markdown("""
 ---
-**Disclaimer:** This is a demo project and not an official CBSE website.
+**Disclaimer : Neither NIC nor CBSE is responsible for any inadvertent error that may have crept in the results being published on Net. The results published on net are for Immediate information to the examinees. These can not be treated as original mark sheets. Original mark sheets have been issued by the Board separately.
+
+:** 
 """)
