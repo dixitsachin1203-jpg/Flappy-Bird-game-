@@ -1,223 +1,66 @@
-import streamlit as st
-
-st.set_page_config(page_title="Flappy Bird", layout="centered")
-
-st.title("🐦 Flappy Bird (Easy Mode + High Score)")
-
-game_html = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<style>
-body {
-    margin: 0;
-    overflow: hidden;
-    background: linear-gradient(to bottom, #70c5ce, #ffffff);
-}
-canvas {
-    display: block;
-    margin: auto;
-    background: #87CEEB;
-    border-radius: 10px;
-    outline: none;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>CBSE Results 2025</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f0f0; margin: 0; }
+        .header { background-color: #00b2b2; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .container { display: flex; justify-content: center; margin-top: 50px; }
+        .card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ccc; width: 600px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { text-align: center; font-size: 18px; color: #333; margin-bottom: 25px; }
+        .form-group { display: flex; align-items: center; margin-bottom: 15px; }
+        label { width: 40%; font-size: 14px; color: #555; }
+        input[type="text"] { width: 60%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-container { text-align: center; margin-top: 20px; }
+        .btn-submit { background-color: #007bff; color: white; border: none; padding: 10px 25px; border-radius: 4px; cursor: pointer; }
+        .btn-reset { background-color: #dc3545; color: white; border: none; padding: 10px 25px; border-radius: 4px; cursor: pointer; }
+        .disclaimer { font-size: 11px; color: #666; margin-top: 30px; text-align: justify; line-height: 1.4; }
+    </style>
 </head>
 <body>
 
-<canvas id="gameCanvas" width="400" height="500" tabindex="1"></canvas>
+<div class="header">
+    <div><strong>केन्द्रीय माध्यमिक शिक्षा बोर्ड</strong><br>Central Board of Secondary Education</div>
+    <div style="text-align: right;"><strong>https://cbseresults.nic.in</strong><br>Examination Results 2025</div>
+</div>
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+<div class="container">
+    <div class="card">
+        <h2>Secondary School Examination (Class X) Results 2025</h2>
+        <form action="/submit" method="post">
+            <div class="form-group">
+                <label>Your Roll Number :</label>
+                <input type="text" name="roll_no" placeholder="Roll Number">
+            </div>
+            <div class="form-group">
+                <label>Your School Number :</label>
+                <input type="text" name="school_no" placeholder="School Number">
+            </div>
+            <div class="form-group">
+                <label>Admit Card Id <span style="color:blue; font-size:10px;">(as given on your admit card)</span> :</label>
+                <input type="text" name="admit_id" placeholder="Admit Card Id">
+            </div>
+            <div class="form-group">
+                <label>Date of Birth <span style="color:blue; font-size:10px;">(DD/MM/YYYY)</span> :</label>
+                <input type="text" name="dob" placeholder="Date of Birth">
+            </div>
+            <div class="form-group">
+                <label>Enter Security Pin <span style="color:blue; font-size:10px;">(case sensitive)</span> :</label>
+                <input type="text" name="pin" placeholder="Security Pin">
+            </div>
+            
+            <div class="btn-container">
+                <button type="submit" class="btn-submit">Submit</button>
+                <button type="reset" class="btn-reset">Reset</button>
+            </div>
+        </form>
 
-// Ensure focus for keyboard
-canvas.focus();
-canvas.addEventListener("click", () => canvas.focus());
-
-// SETTINGS (EASY MODE)
-const gravity = 0.3;
-const jumpPower = -7;
-let pipeSpeed = 2;
-const pipeGap = 180;
-
-// Safe best score load
-let bestScore = parseInt(localStorage.getItem("flappyBest")) || 0;
-
-// Game variables
-let bird, pipes, score, gameOver, gameStarted, countdown, autoFlaps;
-
-// Reset game
-function resetGame() {
-    bird = { x: 50, y: 250, velocity: 0 };
-    pipes = [];
-    score = 0;
-    gameOver = false;
-    gameStarted = false;
-    countdown = 3;
-    autoFlaps = 2;
-    pipeSpeed = 2;
-    startCountdown();
-}
-
-resetGame();
-
-// Create pipe
-function createPipe() {
-    let height = Math.floor(Math.random() * 180) + 120;
-    pipes.push({ x: 400, height: height, passed: false });
-}
-
-// Controls
-function flap() {
-    if (gameStarted && !gameOver) {
-        bird.velocity = jumpPower;
-    }
-}
-
-// Keyboard
-document.addEventListener("keydown", function(e) {
-    if (e.code === "Space") {
-        e.preventDefault();
-        flap();
-    }
-});
-
-// Mouse
-canvas.addEventListener("mousedown", flap);
-
-// Countdown
-function startCountdown() {
-    let interval = setInterval(() => {
-        countdown--;
-        if (countdown <= 0) {
-            clearInterval(interval);
-            gameStarted = true;
-        }
-    }, 1000);
-}
-
-// Update game
-function update() {
-    if (gameOver || !gameStarted) return;
-
-    // Auto start boost
-    if (autoFlaps > 0) {
-        bird.velocity = -5;
-        autoFlaps--;
-    }
-
-    bird.velocity += gravity;
-    bird.y += bird.velocity;
-
-    // Pipes
-    if (pipes.length === 0 || pipes[pipes.length - 1].x < 220) {
-        createPipe();
-    }
-
-    pipes.forEach(pipe => pipe.x -= pipeSpeed);
-
-    // Collision
-    pipes.forEach(pipe => {
-        if (pipe.x < 75 && pipe.x > 15) {
-            if (bird.y < pipe.height - 5 || bird.y > pipe.height + pipeGap + 5) {
-                gameOver = true;
-            }
-        }
-    });
-
-    // Ground
-    if (bird.y > 500 || bird.y < 0) {
-        gameOver = true;
-    }
-
-    // Score
-    pipes.forEach(pipe => {
-        if (!pipe.passed && pipe.x < 50) {
-            pipe.passed = true;
-            score++;
-
-            if (score > bestScore) {
-                bestScore = score;
-                localStorage.setItem("flappyBest", bestScore);
-            }
-
-            if (score % 5 === 0) {
-                pipeSpeed += 0.2;
-            }
-        }
-    });
-}
-
-// Draw
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Bird
-    ctx.beginPath();
-    ctx.arc(bird.x, bird.y, 12, 0, Math.PI * 2);
-    ctx.fillStyle = "yellow";
-    ctx.fill();
-
-    // Pipes
-    pipes.forEach(pipe => {
-        ctx.fillStyle = "green";
-        ctx.fillRect(pipe.x, 0, 40, pipe.height);
-        ctx.fillRect(pipe.x, pipe.height + pipeGap, 40, 500);
-    });
-
-    // Score
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.fillText("Score: " + score, 10, 25);
-    ctx.fillText("Best: " + bestScore, 280, 25);
-
-    // Countdown
-    if (!gameStarted) {
-        ctx.font = "50px Arial";
-        ctx.fillText(countdown > 0 ? countdown : "GO!", 160, 250);
-    }
-
-    // Game Over
-    if (gameOver) {
-        ctx.fillStyle = "red";
-        ctx.font = "30px Arial";
-        ctx.fillText("Game Over", 120, 220);
-
-        ctx.fillStyle = "black";
-        ctx.fillRect(140, 250, 120, 40);
-        ctx.fillStyle = "white";
-        ctx.font = "18px Arial";
-        ctx.fillText("Restart", 165, 277);
-    }
-}
-
-// Restart button
-canvas.addEventListener("click", function(e) {
-    if (gameOver) {
-        let rect = canvas.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-
-        if (x >= 140 && x <= 260 && y >= 250 && y <= 290) {
-            resetGame();
-        }
-    }
-});
-
-// Game loop
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-loop();
-</script>
+        <div class="disclaimer">
+            <strong>Disclaimer:</strong> Neither NIC nor CBSE is responsible for any inadvertent error that may have crept in the results being published on Net...
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
-"""
-
-st.components.v1.html(game_html, height=520)
