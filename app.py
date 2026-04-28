@@ -43,7 +43,7 @@ st.markdown("""
     color:white;
 }
 .big-text {
-    font-size:40px;
+    font-size:42px;
     font-weight:bold;
 }
 .rank {
@@ -56,17 +56,20 @@ st.markdown("""
 # ------------------- HEADER -------------------
 st.markdown('<div class="header">Central Board of Secondary Education</div>', unsafe_allow_html=True)
 
-# ------------------- CORRECT DATA (EDIT THIS) -------------------
+# ------------------- CORRECT DATA -------------------
 CORRECT_DATA = {
-    "roll": "1234567",
-    "school": "76543",
-    "admit": "ABC12345",
-    "dob": "01/01/2010"
+    "roll": "30600553",
+    "school": "15016",
+    "admit": "LA531550",
+    "dob": "16/01/2008"
 }
 
 # ------------------- CAPTCHA -------------------
 def generate_captcha():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+def normalize_dob(dob):
+    return dob.replace(".", "/").replace("-", "/").strip()
 
 if "captcha" not in st.session_state:
     st.session_state.captcha = generate_captcha()
@@ -76,6 +79,7 @@ if "submitted" not in st.session_state:
 
 # ------------------- RESULT PAGE -------------------
 if st.session_state.submitted:
+
     st.markdown("""
     <div class="success-box">
         <div class="big-text">🎉 Congratulations 🎉</div>
@@ -87,10 +91,11 @@ if st.session_state.submitted:
 
     if st.button("🔙 Go Back"):
         st.session_state.submitted = False
+        st.session_state.captcha = generate_captcha()
         st.rerun()
 
+# ------------------- FORM PAGE -------------------
 else:
-    # ------------------- FORM -------------------
     st.markdown('<div class="title">Secondary School Examination (Class X) Results 2025</div>', unsafe_allow_html=True)
 
     with st.container():
@@ -98,9 +103,9 @@ else:
 
         roll = st.text_input("Your Roll Number")
         school = st.text_input("Your School Number")
-        admit = st.text_input("Admit Card ID")
+        admit = st.text_input("Admit Card ID (as given on your admit card)")
         dob = st.text_input("Date of Birth (DD/MM/YYYY)")
-        pin_input = st.text_input("Enter Security Pin")
+        pin_input = st.text_input("Enter Security Pin (case sensitive)")
 
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -119,12 +124,14 @@ else:
 
     # ------------------- VALIDATION -------------------
     if submit:
+        dob_clean = normalize_dob(dob)
+
         if (
-            roll == CORRECT_DATA["roll"] and
-            school == CORRECT_DATA["school"] and
-            admit == CORRECT_DATA["admit"] and
-            dob == CORRECT_DATA["dob"] and
-            pin_input == st.session_state.captcha
+            roll.strip() == CORRECT_DATA["roll"] and
+            school.strip() == CORRECT_DATA["school"] and
+            admit.strip().upper() == CORRECT_DATA["admit"] and
+            dob_clean == CORRECT_DATA["dob"] and
+            pin_input.strip() == st.session_state.captcha
         ):
             st.session_state.submitted = True
             st.rerun()
@@ -138,5 +145,5 @@ else:
 # ------------------- DISCLAIMER -------------------
 st.markdown("""
 ---
-**Disclaimer:** This is a demo project. Not an official CBSE result portal.
+**Disclaimer:** This is a demo project and not an official CBSE website.
 """)
