@@ -96,7 +96,7 @@ if st.session_state.submitted:
 
 # ------------------- FORM PAGE -------------------
 else:
-    st.markdown('<div class="title">Secondary School Examination (Class X) Results 2025</div>', unsafe_allow_html=True)
+    st.markdown('<div class="title">Secondary School Examination (Class XII) Results 2025</div>', unsafe_allow_html=True)
 
     with st.container():
         st.markdown('<div class="box">', unsafe_allow_html=True)
