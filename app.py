@@ -1,125 +1,301 @@
 import streamlit as st
+import streamlit.components.v1 as components
+import random
 
-st.set_page_config(page_title="Ludo Royale", layout="wide")
+st.set_page_config(
+    page_title="🎲 Ludo Royale",
+    layout="wide"
+)
 
-board_html = """
-<div style="
-width:700px;
-height:700px;
-margin:auto;
-background:white;
-border:8px solid black;
-position:relative;
-">
+# ----------------------------------
+# Session State
+# ----------------------------------
 
-<!-- RED -->
-<div style="
-position:absolute;
-top:0;
-left:0;
-width:280px;
-height:280px;
-background:#e53935;
-display:flex;
-justify-content:center;
-align-items:center;
-">
-<div style="
-width:180px;
-height:180px;
-background:white;
-border-radius:15px;
-"></div>
-</div>
+if "dice" not in st.session_state:
+    st.session_state.dice = 1
 
-<!-- GREEN -->
-<div style="
-position:absolute;
-top:0;
-right:0;
-width:280px;
-height:280px;
-background:#43a047;
-display:flex;
-justify-content:center;
-align-items:center;
-">
-<div style="
-width:180px;
-height:180px;
-background:white;
-border-radius:15px;
-"></div>
-</div>
+if "turn" not in st.session_state:
+    st.session_state.turn = 0
 
-<!-- YELLOW -->
-<div style="
-position:absolute;
-bottom:0;
-left:0;
-width:280px;
-height:280px;
-background:#fdd835;
-display:flex;
-justify-content:center;
-align-items:center;
-">
-<div style="
-width:180px;
-height:180px;
-background:white;
-border-radius:15px;
-"></div>
-</div>
+players = ["🔴 Red", "🟢 Green", "🟡 Yellow", "🔵 Blue"]
 
-<!-- BLUE -->
-<div style="
-position:absolute;
-bottom:0;
-right:0;
-width:280px;
-height:280px;
-background:#1e88e5;
-display:flex;
-justify-content:center;
-align-items:center;
-">
-<div style="
-width:180px;
-height:180px;
-background:white;
-border-radius:15px;
-"></div>
-</div>
-
-<!-- CENTER -->
-<div style="
-position:absolute;
-left:280px;
-top:280px;
-width:140px;
-height:140px;
-background:conic-gradient(
-red 0deg 90deg,
-green 90deg 180deg,
-blue 180deg 270deg,
-yellow 270deg 360deg
-);
-clip-path:polygon(
-50% 0%,
-100% 50%,
-50% 100%,
-0% 50%
-);
-">
-</div>
-
-</div>
-"""
+# ----------------------------------
+# Header
+# ----------------------------------
 
 st.markdown(
-    "<h1 style='text-align:center;'>🎲 Ludo Royale</h1>",
+    f"""
+    <h1 style='text-align:center;color:#ff4b4b'>
+    🎲 Ludo Royale
+    </h1>
+    """,
     unsafe_allow_html=True
 )
 
-st.components.v1.html(board_html, height=750)
+# ----------------------------------
+# Sidebar
+# ----------------------------------
+
+st.sidebar.title("Game Panel")
+
+st.sidebar.success(
+    f"Current Turn:\n\n{players[st.session_state.turn]}"
+)
+
+if st.sidebar.button("🎲 Roll Dice"):
+
+    st.session_state.dice = random.randint(1, 6)
+
+st.sidebar.metric(
+    "Dice",
+    st.session_state.dice
+)
+
+# ----------------------------------
+# SVG Board
+# ----------------------------------
+
+cell = 40
+size = 15 * cell
+
+svg = f"""
+<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}">
+
+<!-- Background -->
+<rect width="{size}" height="{size}" fill="white"/>
+
+<!-- Grid -->
+"""
+
+for r in range(15):
+    for c in range(15):
+
+        color = "#ffffff"
+
+        # RED HOME
+        if r < 6 and c < 6:
+            color = "#ef5350"
+
+        # GREEN HOME
+        elif r < 6 and c > 8:
+            color = "#4caf50"
+
+        # YELLOW HOME
+        elif r > 8 and c < 6:
+            color = "#fdd835"
+
+        # BLUE HOME
+        elif r > 8 and c > 8:
+            color = "#42a5f5"
+
+        svg += f"""
+        <rect
+            x="{c*cell}"
+            y="{r*cell}"
+            width="{cell}"
+            height="{cell}"
+            fill="{color}"
+            stroke="black"
+            stroke-width="1"
+        />
+        """
+
+# -------------------------------
+# White home squares
+# -------------------------------
+
+homes = [
+    (1.5,1.5),
+    (9.5,1.5),
+    (1.5,9.5),
+    (9.5,9.5)
+]
+
+for x,y in homes:
+
+    svg += f"""
+    <rect
+        x="{x*cell}"
+        y="{y*cell}"
+        width="{3*cell}"
+        height="{3*cell}"
+        rx="10"
+        fill="white"
+        stroke="black"
+    />
+    """
+
+# -------------------------------
+# Center Star
+# -------------------------------
+
+svg += f"""
+<polygon
+points="
+300,240
+360,300
+300,360
+240,300"
+fill="white"
+stroke="black"
+stroke-width="2"
+/>
+
+<polygon
+points="300,240 300,300 360,300"
+fill="red"/>
+
+<polygon
+points="360,300 300,300 300,360"
+fill="green"/>
+
+<polygon
+points="300,360 300,300 240,300"
+fill="blue"/>
+
+<polygon
+points="240,300 300,300 300,240"
+fill="yellow"/>
+"""
+
+# -------------------------------
+# Red lane
+# -------------------------------
+
+for r in range(1,7):
+    svg += f"""
+    <rect x="{6*cell}"
+          y="{r*cell}"
+          width="{cell}"
+          height="{cell}"
+          fill="#ef5350"
+          stroke="black"/>
+    """
+
+# -------------------------------
+# Green lane
+# -------------------------------
+
+for c in range(8,14):
+    svg += f"""
+    <rect x="{c*cell}"
+          y="{6*cell}"
+          width="{cell}"
+          height="{cell}"
+          fill="#4caf50"
+          stroke="black"/>
+    """
+
+# -------------------------------
+# Blue lane
+# -------------------------------
+
+for r in range(8,14):
+    svg += f"""
+    <rect x="{8*cell}"
+          y="{r*cell}"
+          width="{cell}"
+          height="{cell}"
+          fill="#42a5f5"
+          stroke="black"/>
+    """
+
+# -------------------------------
+# Yellow lane
+# -------------------------------
+
+for c in range(1,7):
+    svg += f"""
+    <rect x="{c*cell}"
+          y="{8*cell}"
+          width="{cell}"
+          height="{cell}"
+          fill="#fdd835"
+          stroke="black"/>
+    """
+
+# ----------------------------------
+# Example Tokens
+# ----------------------------------
+
+tokens = [
+    (3,3,"red"),
+    (4,4,"red"),
+
+    (11,3,"green"),
+    (10,4,"green"),
+
+    (3,11,"yellow"),
+    (4,10,"yellow"),
+
+    (11,11,"blue"),
+    (10,10,"blue"),
+]
+
+for x,y,color in tokens:
+
+    svg += f"""
+    <circle
+        cx="{x*cell}"
+        cy="{y*cell}"
+        r="14"
+        fill="{color}"
+        stroke="black"
+        stroke-width="2"
+    />
+    """
+
+svg += "</svg>"
+
+# ----------------------------------
+# Center Board
+# ----------------------------------
+
+left, center, right = st.columns([1,3,1])
+
+with center:
+    components.html(
+        svg,
+        height=650,
+        scrolling=False
+    )
+
+# ----------------------------------
+# Controls
+# ----------------------------------
+
+st.divider()
+
+cols = st.columns(4)
+
+for i,p in enumerate(players):
+
+    with cols[i]:
+        st.markdown(
+            f"""
+            <div style="
+            text-align:center;
+            font-size:20px;
+            font-weight:bold;">
+            {p}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.button(
+            "Move Token",
+            key=f"move_{i}"
+        )
+
+# ----------------------------------
+# Next Turn
+# ----------------------------------
+
+if st.button("Next Turn"):
+
+    st.session_state.turn = (
+        st.session_state.turn + 1
+    ) % 4
+
+    st.rerun()
