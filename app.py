@@ -54,7 +54,7 @@ st.markdown("""
     
     /* Native button styling overrides to match Ludo King theme */
     div.stButton > button {
-        background: linear-gradient(135deg, #FF1493 0%, #C71585 100%);
+        background: linear-gradient(135deg, #FF1493 0%, #C71585 100%) !important;
         color: white !important;
         border: none !important;
         border-radius: 50px !important;
@@ -88,26 +88,20 @@ COLORS = {
     "Yellow": "#F1C40F",
     "Blue": "#3498DB"
 }
-LIGHT_COLORS = {
-    "Red": "#FF99B2",
-    "Green": "#A3E4D7",
-    "Yellow": "#F9E79F",
-    "Blue": "#AED6F1"
-}
 
 # The classic cross-track layout coordinates (15x15 Ludo structural grid)
 BOARD_PATH = [
-    (1,6), (2,6), (3,6), (4,6), (5,6), (6,6), (6,5), (6,4), (6,3), (6,2), (6,1), (6,0), # Top-Left to Top
-    (7,0), (8,0), (8,1), (8,2), (8,3), (8,4), (8,5), (9,6), (10,6), (11,6), (12,6), (13,6), (14,6), # Top-Right to Right
-    (14,7), (14,8), (13,8), (12,8), (11,8), (10,8), (9,8), (8,9), (8,10), (8,11), (8,12), (8,13), (8,14), # Bottom-Right to Bottom
-    (7,14), (6,14), (6,13), (6,12), (6,11), (6,10), (6,9), (5,8), (4,8), (3,8), (2,8), (1,8), (0,8), (0,7)  # Bottom-Left to Left
+    (1,6), (2,6), (3,6), (4,6), (5,6), (6,6), (6,5), (6,4), (6,3), (6,2), (6,1), (6,0),
+    (7,0), (8,0), (8,1), (8,2), (8,3), (8,4), (8,5), (9,6), (10,6), (11,6), (12,6), (13,6), (14,6),
+    (14,7), (14,8), (13,8), (12,8), (11,8), (10,8), (9,8), (8,9), (8,10), (8,11), (8,12), (8,13), (8,14),
+    (7,14), (6,14), (6,13), (6,12), (6,11), (6,10), (6,9), (5,8), (4,8), (3,8), (2,8), (1,8), (0,8), (0,7)
 ]
 TRACK_LEN = len(BOARD_PATH)
 
 # Ludo King standard entry block indices on the track array
 START_OFFSETS = {"Red": 0, "Green": 13, "Yellow": 26, "Blue": 39}
 
-# Ludo King traditional star/safety tiles mapping
+# FIXED: Ludo King traditional star/safety tiles mapping indices
 SAFETY_TILES = [0, 8, 13, 21, 26, 34, 39, 47]
 
 if "ludo_king_state" not in st.session_state:
@@ -118,7 +112,7 @@ if "ludo_king_state" not in st.session_state:
     st.session_state.winner = None
     st.session_state.match_logs = ["🏰 Arena ready! Red rolls first."]
     
-    # Position tracking: -1 = Base, 0-50 = Steps along track, 51+ = Home Triangle Stretch, 999 = Done
+    # Position tracking: -1 = Base, 0-50 = Steps along track, 999 = Done
     st.session_state.pawns = {
         "Red": [-1, -1],
         "Green": [-1, -1],
@@ -139,7 +133,6 @@ def trigger_roll():
     st.session_state.has_rolled = True
     post_log(f"🎲 **{active_p}** rolled a gorgeous **{st.session_state.dice_val}**!")
     
-    # Auto-pass rule if all pawns are locked and roll is not a 6
     player_pawns = st.session_state.pawns[active_p]
     if all(pos == -1 for pos in player_pawns) and st.session_state.dice_val != 6:
         post_log(f"➔ {active_p} holds no escape moves. Passing dice.")
@@ -158,7 +151,6 @@ def execution_move(pawn_index):
         if roll == 6:
             positions[pawn_index] = 0
             post_log(f"🚀 {active_p} Pawn {pawn_index + 1} escaped onto starting grid!")
-            # Retain turn on rolling a 6 just like Ludo King!
             st.session_state.has_rolled = False
             return
     else:
@@ -174,11 +166,9 @@ def execution_move(pawn_index):
     forward_turn()
 
 def check_board_captures(current_player, p_idx, relative_pos):
-    # Map back to global track index array to find overlap conflicts
     start_offset = START_OFFSETS[current_player]
     global_active_idx = (relative_pos + start_offset) % TRACK_LEN
     
-    # Safety rule verification
     if global_active_idx in SAFETY_TILES:
         return
         
@@ -187,7 +177,7 @@ def check_board_captures(current_player, p_idx, relative_pos):
             continue
         opp_offset = START_OFFSETS[opponent]
         for opp_p_idx, opp_pos in enumerate(st.session_state.pawns[opponent]):
-            if opp_pos != -1 and opp_pos != 999 and opp_pos < 45:
+            if opp_pos != -1 and opp_pos != 999:
                 global_opp_idx = (opp_pos + opp_offset) % TRACK_LEN
                 if global_active_idx == global_opp_idx:
                     st.session_state.pawns[opponent][opp_p_idx] = -1
@@ -230,9 +220,16 @@ def build_premium_ludo_svg():
         for j in range(15):
             if (6 <= i <= 8) or (6 <= j <= 8):
                 if 6 <= i <= 8 and 6 <= j <= 8:
-                    continue # Skip central triangle space
+                    continue
                 cx, cy = i * tile, j * tile
-                
-                # Base track structural fill color layouts
                 f_color = "#2c2f44"
                 
+                # Colorize specialized Home Stretches
+                if i == 7 and 1 <= j <= 5: f_color = COLORS["Green"]
+                elif i == 7 and 9 <= j <= 13: f_color = COLORS["Blue"]
+                elif j == 7 and 1 <= i <= 5: f_color = COLORS["Red"]
+                elif j == 7 and 9 <= i <= 13: f_color = COLORS["Yellow"]
+                
+                svg += f'<rect x="{cx}" y="{cy}" width="{tile}" height="{tile}" fill="{f_color}" stroke="#141622" stroke-width="1.5"/>'
+
+    # Draw classic Star Icons on Safety Tiles
